@@ -29,6 +29,7 @@
 #include "ORBVocabulary.h"
 #include "KeyFrame.h"
 #include "ORBextractor.h"
+#include <opencv_apps/Frame.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -48,14 +49,8 @@ public:
     // Copy constructor.
     Frame(const Frame &frame);
 
-    // Constructor for stereo cameras.
-    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
-
-    // Constructor for RGB-D cameras.
-    Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
-
     // Constructor for Monocular cameras.
-    Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const opencv_apps::Frame &feature_frame, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, const int & scaleLevels, const float & scaleFactor);
 
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im);
@@ -90,20 +85,20 @@ public:
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
     // If there is a match, depth is computed and the right coordinate associated to the left keypoint is stored.
-    void ComputeStereoMatches();
+//    void ComputeStereoMatches();
 
     // Associate a "right" coordinate to a keypoint if there is valid depth in the depthmap.
-    void ComputeStereoFromRGBD(const cv::Mat &imDepth);
+//    void ComputeStereoFromRGBD(const cv::Mat &imDepth);
 
     // Backprojects a keypoint (if stereo/depth info available) into 3D world coordinates.
-    cv::Mat UnprojectStereo(const int &i);
+//    cv::Mat UnprojectStereo(const int &i);
 
 public:
     // Vocabulary used for relocalization.
     ORBVocabulary* mpORBvocabulary;
 
     // Feature extractor. The right is used only in the stereo case.
-    ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
+//    ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
 
     // Frame timestamp.
     double mTimeStamp;
@@ -196,7 +191,8 @@ private:
     void UndistortKeyPoints();
 
     // Computes image bounds for the undistorted image (called in the constructor).
-    void ComputeImageBounds(const cv::Mat &imLeft);
+    // Todo: change for reading this from camera info
+    void ComputeImageBounds(int rows = 640, int cols = 480);
 
     // Assign keypoints to the grid for speed up feature matching (called in the constructor).
     void AssignFeaturesToGrid();

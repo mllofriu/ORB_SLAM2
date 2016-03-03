@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/biorob/catkin_ws/src/orb_slam2/Examples/ROS/build-ORB_SLAM2-Desktop-Default/devel/setup.sh

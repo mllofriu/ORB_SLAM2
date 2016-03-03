@@ -25,18 +25,16 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include"Viewer.h"
-#include"FrameDrawer.h"
+
 #include"Map.h"
 #include"LocalMapping.h"
 #include"LoopClosing.h"
 #include"Frame.h"
 #include "ORBVocabulary.h"
 #include"KeyFrameDatabase.h"
-#include"ORBextractor.h"
 #include "Initializer.h"
-#include "MapDrawer.h"
 #include "System.h"
+#include "opencv_apps/Frame.h"
 
 #include <mutex>
 
@@ -54,13 +52,13 @@ class Tracking
 {  
 
 public:
-    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
+    Tracking(System* pSys, ORBVocabulary* pVoc, Map* pMap,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
-    cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
-    cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
+//    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
+//    cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
+    cv::Mat GrabFeatureFrameMonocular(const opencv_apps::Frame &frame);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
@@ -121,7 +119,7 @@ protected:
     void Track();
 
     // Map initialization for stereo and RGB-D
-    void StereoInitialization();
+//    void StereoInitialization();
 
     // Map initialization for monocular
     void MonocularInitialization();
@@ -174,9 +172,9 @@ protected:
     System* mpSystem;
     
     //Drawers
-    Viewer* mpViewer;
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
+    //Viewer* mpViewer;
+    //FrameDrawer* mpFrameDrawer;
+    //MapDrawer* mpMapDrawer;
 
     //Map
     Map* mpMap;
@@ -189,6 +187,9 @@ protected:
     //New KeyFrame rules (according to fps)
     int mMinFrames;
     int mMaxFrames;
+
+    float fScaleFactor;
+    int nLevels;
 
     // Threshold close/far points
     // Points seen as close by the stereo/RGBD sensor are considered reliable

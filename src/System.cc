@@ -23,7 +23,8 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
-#include <pangolin/pangolin.h>
+//#include <pangolin/pangolin.h>
+#include "opencv_apps/Frame.h"
 
 namespace ORB_SLAM2
 {
@@ -77,13 +78,12 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpMap = new Map();
 
     //Create Drawers. These are used by the Viewer
-    mpFrameDrawer = new FrameDrawer(mpMap);
-    mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
+//    mpFrameDrawer = new FrameDrawer(mpMap);
+//    mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+    mpTracker = new Tracking(this, mpVocabulary, mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -94,11 +94,11 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
 
     //Initialize the Viewer thread and launch
-    mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
-    if(bUseViewer)
-        mptViewer = new thread(&Viewer::Run, mpViewer);
+//    mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+//    if(bUseViewer)
+//        mptViewer = new thread(&Viewer::Run, mpViewer);
 
-    mpTracker->SetViewer(mpViewer);
+//    mpTracker->SetViewer(mpViewer);
 
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
@@ -111,97 +111,97 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser->SetLocalMapper(mpLocalMapper);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
-{
-    if(mSensor!=STEREO)
-    {
-        cerr << "ERROR: you called TrackStereo but input sensor was not set to STEREO." << endl;
-        exit(-1);
-    }   
+//cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
+//{
+//    if(mSensor!=STEREO)
+//    {
+//        cerr << "ERROR: you called TrackStereo but input sensor was not set to STEREO." << endl;
+//        exit(-1);
+//    }
 
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
+//    // Check mode change
+//    {
+//        unique_lock<mutex> lock(mMutexMode);
+//        if(mbActivateLocalizationMode)
+//        {
+//            mpLocalMapper->RequestStop();
 
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
+//            // Wait until Local Mapping has effectively stopped
+//            while(!mpLocalMapper->isStopped())
+//            {
+//                usleep(1000);
+//            }
 
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
+//            mpTracker->InformOnlyTracking(true);
+//            mbActivateLocalizationMode = false;
+//        }
+//        if(mbDeactivateLocalizationMode)
+//        {
+//            mpTracker->InformOnlyTracking(false);
+//            mpLocalMapper->Release();
+//            mbDeactivateLocalizationMode = false;
+//        }
+//    }
 
-    // Check reset
-    {
-    unique_lock<mutex> lock(mMutexReset);
-    if(mbReset)
-    {
-        mpTracker->Reset();
-        mbReset = false;
-    }
-    }
+//    // Check reset
+//    {
+//    unique_lock<mutex> lock(mMutexReset);
+//    if(mbReset)
+//    {
+//        mpTracker->Reset();
+//        mbReset = false;
+//    }
+//    }
 
-    return mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
-}
+//    return mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
+//}
 
-cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp)
-{
-    if(mSensor!=RGBD)
-    {
-        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
-        exit(-1);
-    }    
+//cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp)
+//{
+//    if(mSensor!=RGBD)
+//    {
+//        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
+//        exit(-1);
+//    }
 
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
+//    // Check mode change
+//    {
+//        unique_lock<mutex> lock(mMutexMode);
+//        if(mbActivateLocalizationMode)
+//        {
+//            mpLocalMapper->RequestStop();
 
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
+//            // Wait until Local Mapping has effectively stopped
+//            while(!mpLocalMapper->isStopped())
+//            {
+//                usleep(1000);
+//            }
 
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
+//            mpTracker->InformOnlyTracking(true);
+//            mbActivateLocalizationMode = false;
+//        }
+//        if(mbDeactivateLocalizationMode)
+//        {
+//            mpTracker->InformOnlyTracking(false);
+//            mpLocalMapper->Release();
+//            mbDeactivateLocalizationMode = false;
+//        }
+//    }
 
-    // Check reset
-    {
-    unique_lock<mutex> lock(mMutexReset);
-    if(mbReset)
-    {
-        mpTracker->Reset();
-        mbReset = false;
-    }
-    }
+//    // Check reset
+//    {
+//    unique_lock<mutex> lock(mMutexReset);
+//    if(mbReset)
+//    {
+//        mpTracker->Reset();
+//        mbReset = false;
+//    }
+//    }
 
-    return mpTracker->GrabImageRGBD(im,depthmap,timestamp);
-}
+//    return mpTracker->GrabImageRGBD(im,depthmap,timestamp);
+//}
 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
+cv::Mat System::TrackMonocular(const opencv_apps::Frame &frame)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -243,7 +243,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
     }
 
-    return mpTracker->GrabImageMonocular(im,timestamp);
+    return mpTracker->GrabFeatureFrameMonocular(frame);
 }
 
 void System::ActivateLocalizationMode()
@@ -268,16 +268,17 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
-    mpViewer->RequestFinish();
+//    mpViewer->RequestFinish();
 
     // Wait until all thread have effectively stopped
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished()  ||
-          !mpViewer->isFinished()      || mpLoopCloser->isRunningGBA())
+//          !mpViewer->isFinished()||
+           mpLoopCloser->isRunningGBA())
     {
         usleep(5000);
     }
 
-    pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+//    pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

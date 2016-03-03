@@ -25,7 +25,7 @@
 #include<opencv2/features2d/features2d.hpp>
 
 #include"ORBmatcher.h"
-#include"FrameDrawer.h"
+//#include"FrameDrawer.h"
 #include"Converter.h"
 #include"Map.h"
 #include"Initializer.h"
@@ -43,10 +43,10 @@ using namespace std;
 namespace ORB_SLAM2
 {
 
-Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
+Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
-    mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
+    mpMap(pMap), mnLastRelocFrameId(0)
 {
     // Load camera parameters from settings file
 
@@ -111,18 +111,12 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     // Load ORB parameters
 
     int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
+    fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+    nLevels = fSettings["ORBextractor.nLevels"];
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
-
-    if(sensor==System::STEREO)
-        mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
-
-    if(sensor==System::MONOCULAR)
-        mpIniORBextractor = new ORBextractor(2*nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
+//    mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     cout << endl  << "ORB Extractor Parameters: " << endl;
     cout << "- Number of Features: " << nFeatures << endl;
@@ -130,21 +124,6 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- Scale Factor: " << fScaleFactor << endl;
     cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
     cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
-
-    if(sensor==System::STEREO || sensor==System::RGBD)
-    {
-        mThDepth = mbf*(float)fSettings["ThDepth"]/fx;
-        cout << endl << "Depth Threshold (Close/Far Points): " << mThDepth << endl;
-    }
-
-    if(sensor==System::RGBD)
-    {
-        mDepthMapFactor = fSettings["DepthMapFactor"];
-        if(mDepthMapFactor==0)
-            mDepthMapFactor=1;
-        else
-            mDepthMapFactor = 1.0f/mDepthMapFactor;
-    }
 
 }
 
@@ -160,104 +139,87 @@ void Tracking::SetLoopClosing(LoopClosing *pLoopClosing)
 
 void Tracking::SetViewer(Viewer *pViewer)
 {
-    mpViewer=pViewer;
+//    mpViewer=pViewer;
 }
 
 
-cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
+//cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
+//{
+//    mImGray = imRectLeft;
+//    cv::Mat imGrayRight = imRectRight;
+
+//    if(mImGray.channels()==3)
+//    {
+//        if(mbRGB)
+//        {
+//            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+//            cvtColor(imGrayRight,imGrayRight,CV_RGB2GRAY);
+//        }
+//        else
+//        {
+//            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+//            cvtColor(imGrayRight,imGrayRight,CV_BGR2GRAY);
+//        }
+//    }
+//    else if(mImGray.channels()==4)
+//    {
+//        if(mbRGB)
+//        {
+//            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+//            cvtColor(imGrayRight,imGrayRight,CV_RGBA2GRAY);
+//        }
+//        else
+//        {
+//            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+//            cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
+//        }
+//    }
+
+//    mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+
+//    Track();
+
+//    return mCurrentFrame.mTcw.clone();
+//}
+
+
+//cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp)
+//{
+//    mImGray = imRGB;
+//    cv::Mat imDepth = imD;
+
+//    if(mImGray.channels()==3)
+//    {
+//        if(mbRGB)
+//            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+//        else
+//            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+//    }
+//    else if(mImGray.channels()==4)
+//    {
+//        if(mbRGB)
+//            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+//        else
+//            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+//    }
+
+//    if(mDepthMapFactor!=1 || imDepth.type()!=CV_32F);
+//    imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
+
+//    mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+
+//    Track();
+
+//    return mCurrentFrame.mTcw.clone();
+//}
+
+cv::Mat Tracking::GrabFeatureFrameMonocular(const opencv_apps::Frame &feature_frame)
 {
-    mImGray = imRectLeft;
-    cv::Mat imGrayRight = imRectRight;
-
-    if(mImGray.channels()==3)
-    {
-        if(mbRGB)
-        {
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGB2GRAY);
-        }
-        else
-        {
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGR2GRAY);
-        }
-    }
-    else if(mImGray.channels()==4)
-    {
-        if(mbRGB)
-        {
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_RGBA2GRAY);
-        }
-        else
-        {
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
-            cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
-        }
-    }
-
-    mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
-
-    Track();
-
-    return mCurrentFrame.mTcw.clone();
-}
-
-
-cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp)
-{
-    mImGray = imRGB;
-    cv::Mat imDepth = imD;
-
-    if(mImGray.channels()==3)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
-    }
-    else if(mImGray.channels()==4)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
-    }
-
-    if(mDepthMapFactor!=1 || imDepth.type()!=CV_32F);
-    imDepth.convertTo(imDepth,CV_32F,mDepthMapFactor);
-
-    mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
-
-    Track();
-
-    return mCurrentFrame.mTcw.clone();
-}
-
-
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
-{
-    mImGray = im;
-
-    if(mImGray.channels()==3)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGB2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGR2GRAY);
-    }
-    else if(mImGray.channels()==4)
-    {
-        if(mbRGB)
-            cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
-        else
-            cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
-    }
-
+    // Todo: initialize frame from frame of features
     if(mState==NOT_INITIALIZED || mState==NO_IMAGES_YET)
-        mCurrentFrame = Frame(mImGray,timestamp,mpIniORBextractor,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(feature_frame,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,nLevels,fScaleFactor);
     else
-        mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+        mCurrentFrame = Frame(feature_frame,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,nLevels,fScaleFactor);
 
     Track();
 
@@ -278,12 +240,11 @@ void Tracking::Track()
 
     if(mState==NOT_INITIALIZED)
     {
-        if(mSensor==System::STEREO || mSensor==System::RGBD)
-            StereoInitialization();
-        else
-            MonocularInitialization();
+        MonocularInitialization();
 
-        mpFrameDrawer->Update(this);
+//        cout << "Not inintialized" << endl;
+
+        //mpFrameDrawer->Update(this);
 
         if(mState!=OK)
             return;
@@ -415,7 +376,7 @@ void Tracking::Track()
             mState=LOST;
 
         // Update drawer
-        mpFrameDrawer->Update(this);
+//        mpFrameDrawer->Update(this);
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)
@@ -431,7 +392,7 @@ void Tracking::Track()
             else
                 mVelocity = cv::Mat();
 
-            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 
             // Clean temporal point matches
             for(int i=0; i<mCurrentFrame.N; i++)
@@ -506,59 +467,59 @@ void Tracking::Track()
 }
 
 
-void Tracking::StereoInitialization()
-{
-    if(mCurrentFrame.N>500)
-    {
-        // Set Frame pose to the origin
-        mCurrentFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
+//void Tracking::StereoInitialization()
+//{
+//    if(mCurrentFrame.N>500)
+//    {
+//        // Set Frame pose to the origin
+//        mCurrentFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
 
-        // Create KeyFrame
-        KeyFrame* pKFini = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
+//        // Create KeyFrame
+//        KeyFrame* pKFini = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
 
-        // Insert KeyFrame in the map
-        mpMap->AddKeyFrame(pKFini);
+//        // Insert KeyFrame in the map
+//        mpMap->AddKeyFrame(pKFini);
 
-        // Create MapPoints and asscoiate to KeyFrame
-        for(int i=0; i<mCurrentFrame.N;i++)
-        {
-            float z = mCurrentFrame.mvDepth[i];
-            if(z>0)
-            {
-                cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
-                MapPoint* pNewMP = new MapPoint(x3D,pKFini,mpMap);
-                pNewMP->AddObservation(pKFini,i);
-                pKFini->AddMapPoint(pNewMP,i);
-                pNewMP->ComputeDistinctiveDescriptors();
-                pNewMP->UpdateNormalAndDepth();
-                mpMap->AddMapPoint(pNewMP);
+//        // Create MapPoints and asscoiate to KeyFrame
+//        for(int i=0; i<mCurrentFrame.N;i++)
+//        {
+//            float z = mCurrentFrame.mvDepth[i];
+//            if(z>0)
+//            {
+//                cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
+//                MapPoint* pNewMP = new MapPoint(x3D,pKFini,mpMap);
+//                pNewMP->AddObservation(pKFini,i);
+//                pKFini->AddMapPoint(pNewMP,i);
+//                pNewMP->ComputeDistinctiveDescriptors();
+//                pNewMP->UpdateNormalAndDepth();
+//                mpMap->AddMapPoint(pNewMP);
 
-                mCurrentFrame.mvpMapPoints[i]=pNewMP;
-            }
-        }
+//                mCurrentFrame.mvpMapPoints[i]=pNewMP;
+//            }
+//        }
 
-        cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
+//        cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
-        mpLocalMapper->InsertKeyFrame(pKFini);
+//        mpLocalMapper->InsertKeyFrame(pKFini);
 
-        mLastFrame = Frame(mCurrentFrame);
-        mnLastKeyFrameId=mCurrentFrame.mnId;
-        mpLastKeyFrame = pKFini;
+//        mLastFrame = Frame(mCurrentFrame);
+//        mnLastKeyFrameId=mCurrentFrame.mnId;
+//        mpLastKeyFrame = pKFini;
 
-        mvpLocalKeyFrames.push_back(pKFini);
-        mvpLocalMapPoints=mpMap->GetAllMapPoints();
-        mpReferenceKF = pKFini;
-        mCurrentFrame.mpReferenceKF = pKFini;
+//        mvpLocalKeyFrames.push_back(pKFini);
+//        mvpLocalMapPoints=mpMap->GetAllMapPoints();
+//        mpReferenceKF = pKFini;
+//        mCurrentFrame.mpReferenceKF = pKFini;
 
-        mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
+//        mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
-        mpMap->mvpKeyFrameOrigins.push_back(pKFini);
+//        mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
-        mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+//        //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 
-        mState=OK;
-    }
-}
+//        mState=OK;
+//    }
+//}
 
 void Tracking::MonocularInitialization()
 {
@@ -598,6 +559,8 @@ void Tracking::MonocularInitialization()
         // Find correspondences
         ORBmatcher matcher(0.9,true);
         int nmatches = matcher.SearchForInitialization(mInitialFrame,mCurrentFrame,mvbPrevMatched,mvIniMatches,100);
+
+//        cout << "Matches: " << nmatches << endl;
 
         // Check if there are enough correspondences
         if(nmatches<100)
@@ -729,7 +692,7 @@ void Tracking::CreateInitialMapMonocular()
 
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
-    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+//    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
 
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
@@ -805,63 +768,6 @@ void Tracking::UpdateLastFrame()
     cv::Mat Tlr = mlRelativeFramePoses.back();
 
     mLastFrame.SetPose(Tlr*pRef->GetPose());
-
-    if(mnLastKeyFrameId==mLastFrame.mnId || mSensor==System::MONOCULAR)
-        return;
-
-    // Create "visual odometry" MapPoints
-    // We sort points according to their measured depth by the stereo/RGB-D sensor
-    vector<pair<float,int> > vDepthIdx;
-    vDepthIdx.reserve(mLastFrame.N);
-    for(int i=0; i<mLastFrame.N;i++)
-    {
-        float z = mLastFrame.mvDepth[i];
-        if(z>0)
-        {
-            vDepthIdx.push_back(make_pair(z,i));
-        }
-    }
-
-    if(vDepthIdx.empty())
-        return;
-
-    sort(vDepthIdx.begin(),vDepthIdx.end());
-
-    // We insert all close points (depth<mThDepth)
-    // If less than 100 close points, we insert the 100 closest ones.
-    int nPoints = 0;
-    for(size_t j=0; j<vDepthIdx.size();j++)
-    {
-        int i = vDepthIdx[j].second;
-
-        bool bCreateNew = false;
-
-        MapPoint* pMP = mLastFrame.mvpMapPoints[i];
-        if(!pMP)
-            bCreateNew = true;
-        else if(pMP->Observations()<1)
-        {
-            bCreateNew = true;
-        }
-
-        if(bCreateNew)
-        {
-            cv::Mat x3D = mLastFrame.UnprojectStereo(i);
-            MapPoint* pNewMP = new MapPoint(x3D,mpMap,&mLastFrame,i);
-
-            mLastFrame.mvpMapPoints[i]=pNewMP;
-
-            mlpTemporalPoints.push_back(pNewMP);
-            nPoints++;
-        }
-        else
-        {
-            nPoints++;
-        }
-
-        if(vDepthIdx[j].first>mThDepth && nPoints>100)
-            break;
-    }
 }
 
 bool Tracking::TrackWithMotionModel()
@@ -1082,68 +988,6 @@ void Tracking::CreateNewKeyFrame()
 
     mpReferenceKF = pKF;
     mCurrentFrame.mpReferenceKF = pKF;
-
-    if(mSensor!=System::MONOCULAR)
-    {
-        mCurrentFrame.UpdatePoseMatrices();
-
-        // We sort points by the measured depth by the stereo/RGBD sensor.
-        // We create all those MapPoints whose depth < mThDepth.
-        // If there are less than 100 close points we create the 100 closest.
-        vector<pair<float,int> > vDepthIdx;
-        vDepthIdx.reserve(mCurrentFrame.N);
-        for(int i=0; i<mCurrentFrame.N; i++)
-        {
-            float z = mCurrentFrame.mvDepth[i];
-            if(z>0)
-            {
-                vDepthIdx.push_back(make_pair(z,i));
-            }
-        }
-
-        if(!vDepthIdx.empty())
-        {
-            sort(vDepthIdx.begin(),vDepthIdx.end());
-
-            int nPoints = 0;
-            for(size_t j=0; j<vDepthIdx.size();j++)
-            {
-                int i = vDepthIdx[j].second;
-
-                bool bCreateNew = false;
-
-                MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
-                if(!pMP)
-                    bCreateNew = true;
-                else if(pMP->Observations()<1)
-                {
-                    bCreateNew = true;
-                    mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
-                }
-
-                if(bCreateNew)
-                {
-                    cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
-                    MapPoint* pNewMP = new MapPoint(x3D,pKF,mpMap);
-                    pNewMP->AddObservation(pKF,i);
-                    pKF->AddMapPoint(pNewMP,i);
-                    pNewMP->ComputeDistinctiveDescriptors();
-                    pNewMP->UpdateNormalAndDepth();
-                    mpMap->AddMapPoint(pNewMP);
-
-                    mCurrentFrame.mvpMapPoints[i]=pNewMP;
-                    nPoints++;
-                }
-                else
-                {
-                    nPoints++;
-                }
-
-                if(vDepthIdx[j].first>mThDepth && nPoints>100)
-                    break;
-            }
-        }
-    }
 
     mpLocalMapper->InsertKeyFrame(pKF);
 
@@ -1516,11 +1360,11 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-    mpViewer->RequestStop();
+//    mpViewer->RequestStop();
 
-    cout << "System Reseting" << endl;
-    while(!mpViewer->isStopped())
-        usleep(3000);
+//    cout << "System Reseting" << endl;
+//    while(!mpViewer->isStopped())
+//        usleep(3000);
 
     // Reset Local Mapping
     cout << "Reseting Local Mapper...";
@@ -1555,7 +1399,7 @@ void Tracking::Reset()
     mlFrameTimes.clear();
     mlbLost.clear();
 
-    mpViewer->Release();
+//    mpViewer->Release();
 }
 
 void Tracking::ChangeCalibration(const string &strSettingPath)
