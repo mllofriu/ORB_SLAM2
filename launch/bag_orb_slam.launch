@@ -27,10 +27,10 @@
       
     </node>
     
-  <!--   
+     
     <node pkg="rosbag" type="record" name="recorder" output="screen" args="/image_rect -o succesfullInit"/>
   
-
+<!--
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/biorob/catkin_ws/src/orb_slam2/runs/succesfullInit_2016-03-03-13-10-14.bag"/>
   -->
 </launch>
