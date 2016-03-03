@@ -19,7 +19,7 @@
       <param name="publish_image_" value="true" />
       <remap from="image" to="/image_rect"/>
       <remap from="camera_info" to="/cam/camera_info"/>
-    </node>  --> 
+    </node> 
 
  
     <node pkg="orb_slam2" type="ros_mono" name="slam" output="screen" args="/home/biorob/catkin_ws/src/orb_slam2/Vocabulary/ORBvoc.txt /home/biorob/catkin_ws/src/orb_slam2/Examples/Monocular/test.yaml">
@@ -27,10 +27,4 @@
       
     </node>
     
-  <!--   
-    <node pkg="rosbag" type="record" name="recorder" output="screen" args="/image_rect -o succesfullInit"/>
-  
-
-    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/biorob/catkin_ws/src/orb_slam2/runs/succesfullInit_2016-03-03-13-10-14.bag"/>
-  -->
 </launch>
