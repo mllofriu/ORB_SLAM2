@@ -1,5 +1,6 @@
 <launch>
-    <node pkg="usb_cam" type="usb_cam_node" name="cam" output="screen">
+<!--  
+  <node pkg="usb_cam" type="usb_cam_node" name="cam" output="screen">
       <param name="video_device" value="/dev/video0" />
       <param name="image_width" value="640" />
       <param name="image_height" value="480" />
@@ -27,10 +28,10 @@
       
     </node>
     
-     
-    <node pkg="rosbag" type="record" name="recorder" output="screen" args="/image_rect -o succesfullInit"/>
+     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/biorob/catkin_ws/src/orb_slam2/runs/succesfullInit_2016-03-03-13-10-14.bag"/>
+    
   
 <!--
-    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/biorob/catkin_ws/src/orb_slam2/runs/succesfullInit_2016-03-03-13-10-14.bag"/>
+    <node pkg="rosbag" type="record" name="recorder" output="screen" args="/image_rect -o succesfullInit"/>
   -->
 </launch>
