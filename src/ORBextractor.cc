@@ -57,8 +57,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <vector>
-#include <opencv_apps/Frame.h>
-#include <opencv_apps/KeyPoint.h>
+
 
 #include "ORBextractor.h"
 
@@ -105,40 +104,13 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
 
 
 
-void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+void ORBextractor::operator()( InputArray _image, const orb_slam2::Frame & f, InputArray _mask, vector<KeyPoint>& _keypoints,
                       OutputArray _descriptors)
 { 
-    if(_image.empty())
-        return;
-
-    Mat image = _image.getMat();
-    assert(image.type() == CV_8UC1 );
-
-    // Migration
     vector<KeyPoint> keypoints;
-    Mat descriptors;
-    (*ORB_detector_)(image,cv::noArray(), keypoints, descriptors);
-
-    opencv_apps::Frame f;
-    for( size_t i = 0; i< keypoints.size(); i++ ) {
-        opencv_apps::KeyPoint kp;
-        kp.x = keypoints[i].pt.x;
-        kp.y = keypoints[i].pt.y;
-        kp.size = keypoints[i].size;
-        kp.angle = keypoints[i].angle;
-        kp.octave = keypoints[i].octave;
-
-        // Pointer to the i-th row
-        std::copy(descriptors.ptr<uchar>(i), descriptors.ptr<uchar>(i) + 32, kp.descriptor.begin());
-
-        f.keypoints.push_back(kp);
-    }
-
-
-    keypoints.clear();
-    descriptors = cv::Mat(f.keypoints.size(), 32, CV_8UC1);
+    cv::Mat descriptors = cv::Mat(f.keypoints.size(), 32, CV_8UC1);
     int i = 0;
-    for (opencv_apps::KeyPoint kp : f.keypoints){
+    for (orb_slam2::KeyPoint kp : f.keypoints){
         cv::KeyPoint cvKp;
         cvKp.pt.x = kp.x;
         cvKp.pt.y = kp.y;

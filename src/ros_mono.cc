@@ -56,7 +56,7 @@ void grabImageAndFeatures(const sensor_msgs::ImageConstPtr& image,
         return;
     }
 
-    mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+    mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec(), *frame);
 }
 
 int main(int argc, char **argv)
