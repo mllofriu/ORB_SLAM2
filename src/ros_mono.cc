@@ -31,17 +31,33 @@
 
 #include "include/System.h"
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include "orb_slam2/Frame.h"
+
 using namespace std;
+using namespace sensor_msgs;
+using namespace message_filters;
 
-class ImageGrabber
+ORB_SLAM2::System* mpSLAM;
+
+void grabImageAndFeatures(const sensor_msgs::ImageConstPtr& image,
+                          const orb_slam2::FrameConstPtr & frame)
 {
-public:
-    ImageGrabber(ORB_SLAM2::System* pSLAM):mpSLAM(pSLAM){}
+    // Copy the ros image message to cv::Mat.
+    cv_bridge::CvImageConstPtr cv_ptr;
+    try
+    {
+        cv_ptr = cv_bridge::toCvShare(image);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
 
-    void GrabImage(const sensor_msgs::ImageConstPtr& msg);
-
-    ORB_SLAM2::System* mpSLAM;
-};
+    mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
+}
 
 int main(int argc, char **argv)
 {
@@ -56,41 +72,28 @@ int main(int argc, char **argv)
     }    
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    mpSLAM = new ORB_SLAM2::System(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
-    ImageGrabber igb(&SLAM);
+    ros::NodeHandle nh;
 
-    ros::NodeHandle nodeHandler;
-    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
+    message_filters::Subscriber<sensor_msgs::Image> image_sub(nh, "image", 1);
+    message_filters::Subscriber<orb_slam2::Frame> frame_sub(nh, "features", 1);
+    TimeSynchronizer<Image, orb_slam2::Frame> sync(image_sub, frame_sub, 10);
+    sync.registerCallback(boost::bind(&grabImageAndFeatures, _1, _2));
 
     ros::spin();
 
     // Stop all threads
-    SLAM.Shutdown();
+    mpSLAM->Shutdown();
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    mpSLAM->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     ros::shutdown();
 
     return 0;
 }
 
-void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
-{
-    // Copy the ros image message to cv::Mat.
-    cv_bridge::CvImageConstPtr cv_ptr;
-    try
-    {
-        cv_ptr = cv_bridge::toCvShare(msg);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
 
-    mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec());
-}
 
 
