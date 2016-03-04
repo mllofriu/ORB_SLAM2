@@ -64,7 +64,12 @@ public:
         return nlevels;}
 
     float inline GetScaleFactor(){
-        return scaleFactor;}
+        return scaleFactor;
+    }
+
+    float inline GetLogScaleFactor(){
+        return logScaleFactor;
+    }
 
     std::vector<float> inline GetScaleFactors(){
         return mvScaleFactor;
@@ -74,7 +79,7 @@ public:
         return mvInvScaleFactor;
     }
 
-    std::vector<float> inline GetScaleSigmaSquares(){
+    std::vector<float> const inline GetScaleSigmaSquares(){
         return mvLevelSigma2;
     }
 
@@ -82,7 +87,7 @@ public:
         return mvInvLevelSigma2;
     }
 
-    std::vector<cv::Mat> mvImagePyramid;
+//    std::vector<cv::Mat> mvImagePyramid;
 
 protected:
 
@@ -95,6 +100,7 @@ protected:
 
 
     double scaleFactor;
+    double logScaleFactor;
     int nlevels;
 
     std::vector<float> mvScaleFactor;

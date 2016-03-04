@@ -78,6 +78,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST) :
     scaleFactor(_scaleFactor), nlevels(_nlevels)
 {
+    logScaleFactor = log(scaleFactor);
     mvScaleFactor.resize(_nlevels);
     mvLevelSigma2.resize(_nlevels);
     mvScaleFactor[0]=1.0f;
@@ -96,7 +97,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
         mvInvLevelSigma2[i]=1.0f/mvLevelSigma2[i];
     }
 
-    mvImagePyramid.resize(_nlevels);
+//    mvImagePyramid.resize(_nlevels);
 
     // Migration
     ORB_detector_ = new cv::ORB(_nfeatures, _scaleFactor, _nlevels, _iniThFAST);

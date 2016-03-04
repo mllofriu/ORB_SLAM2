@@ -80,8 +80,35 @@ public:
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
-    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
+    float inline getScaleLevels(){
+        return mpORBextractorLeft->GetLevels();
+    }
 
+    float inline getScaleFactor(){
+        return mpORBextractorLeft->GetScaleFactor();
+    }
+
+    float inline getLogScaleFactor(){
+        return mpORBextractorLeft->GetLogScaleFactor();
+    }
+
+    std::vector<float> inline getScaleFactors(){
+        return mpORBextractorLeft->GetScaleFactors();
+    }
+
+    std::vector<float> inline getInvScaleFactors(){
+        return mpORBextractorLeft->GetInverseScaleFactors();
+    }
+
+    std::vector<float> const inline getLevelSigma2(){
+        return mpORBextractorLeft->GetScaleSigmaSquares();
+    }
+
+    std::vector<float> inline getInvLevelSigma2(){
+        return mpORBextractorLeft->GetInverseScaleSigmaSquares();
+    }
+
+    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
 public:
     // Vocabulary used for relocalization.
     ORBVocabulary* mpORBvocabulary;
@@ -153,15 +180,6 @@ public:
 
     // Reference Keyframe.
     KeyFrame* mpReferenceKF;
-
-    // Scale pyramid info.
-    int mnScaleLevels;
-    float mfScaleFactor;
-    float mfLogScaleFactor;
-    vector<float> mvScaleFactors;
-    vector<float> mvInvScaleFactors;
-    vector<float> mvLevelSigma2;
-    vector<float> mvInvLevelSigma2;
 
     // Undistorted Image Bounds (computed once).
     static float mnMinX;

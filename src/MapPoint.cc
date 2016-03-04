@@ -57,11 +57,11 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
     cv::Mat PC = Pos - Ow;
     const float dist = cv::norm(PC);
     const int level = pFrame->mvKeysUn[idxF].octave;
-    const float levelScaleFactor =  pFrame->mvScaleFactors[level];
-    const int nLevels = pFrame->mnScaleLevels;
+    const float levelScaleFactor =  pFrame->getScaleFactors()[level];
+    const int nLevels = pFrame->getScaleLevels();
 
     mfMaxDistance = dist*levelScaleFactor;
-    mfMinDistance = mfMaxDistance/pFrame->mvScaleFactors[nLevels-1];
+    mfMinDistance = mfMaxDistance/pFrame->getScaleFactors()[nLevels-1];
 
     pFrame->mDescriptors.row(idxF).copyTo(mDescriptor);
 
