@@ -8,7 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   cv_bridge
   cmake_modules
-  opencv_apps
+  dynamic_reconfigure 
+  message_generation
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
@@ -37,16 +38,36 @@ find_package(OpenCV 2.4.3 REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 
+
+# generate the dynamic_reconfigure config file
+generate_dynamic_reconfigure_options(
+  cfg/FeatureDetector.cfg
+)
+
+## Generate messages in the 'msg' folder
+add_message_files(
+   FILES
+   KeyPoint.msg
+   Frame.msg
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+)
+
+
 catkin_package()
 
 include_directories(
-${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIR}
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include/
+  ${EIGEN3_INCLUDE_DIR}
+  ${Pangolin_INCLUDE_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include/
+  ${catkin_INCLUDE_DIRS} 
+  ${OpenCV_INCLUDE_DIRS}
 )
-message(STATUS "Pangolin include dirs" ${Pangolin_INCLUDE_DIR})
-message(STATUS "Pangolin libs dirs" ${Pangolin_LIBRARIES})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -80,11 +101,17 @@ ${EIGEN3_LIBS}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
+#install(TARGETS ${PROJECT_NAME}
+#        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
 
 # Node for monocular camera
 add_executable(ros_mono
 src/ros_mono.cc
 )
-
 target_link_libraries(ros_mono ${PROJECT_NAME})
+
+add_executable(feature_detector src/feature_detector.cpp)
+target_link_libraries(feature_detector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
