@@ -57,6 +57,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <vector>
+#include <opencv_apps/Frame.h>
+#include <opencv_apps/KeyPoint.h>
 
 #include "ORBextractor.h"
 
@@ -66,6 +68,11 @@ using namespace std;
 
 namespace ORB_SLAM2
 {
+
+const int PATCH_SIZE = 31;
+const int HALF_PATCH_SIZE = 15;
+const int EDGE_THRESHOLD = 19;
+
 
 ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
          int _iniThFAST, int _minThFAST) :
@@ -89,7 +96,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
         mvInvLevelSigma2[i]=1.0f/mvLevelSigma2[i];
     }
 
-    mvImagePyramid.resize(_nlevels);\
+    mvImagePyramid.resize(_nlevels);
 
     // Migration
     ORB_detector_ = new cv::ORB(_nfeatures, _scaleFactor, _nlevels, _iniThFAST);
@@ -108,10 +115,45 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
 
     // Migration
     vector<KeyPoint> keypoints;
-    Mat descriptors_cv;
-    (*ORB_detector_)(image,cv::noArray(), keypoints, descriptors_cv);
+    Mat descriptors;
+    (*ORB_detector_)(image,cv::noArray(), keypoints, descriptors);
+
+    opencv_apps::Frame f;
+    for( size_t i = 0; i< keypoints.size(); i++ ) {
+        opencv_apps::KeyPoint kp;
+        kp.x = keypoints[i].pt.x;
+        kp.y = keypoints[i].pt.y;
+        kp.size = keypoints[i].size;
+        kp.angle = keypoints[i].angle;
+        kp.octave = keypoints[i].octave;
+
+        // Pointer to the i-th row
+        std::copy(descriptors.ptr<uchar>(i), descriptors.ptr<uchar>(i) + 32, kp.descriptor.begin());
+
+        f.keypoints.push_back(kp);
+    }
+
+
+    keypoints.clear();
+    descriptors = cv::Mat(f.keypoints.size(), 32, CV_8UC1);
+    int i = 0;
+    for (opencv_apps::KeyPoint kp : f.keypoints){
+        cv::KeyPoint cvKp;
+        cvKp.pt.x = kp.x;
+        cvKp.pt.y = kp.y;
+        cvKp.angle = kp.angle;
+        cvKp.octave = kp.octave;
+        cvKp.size = kp.size;
+
+
+        keypoints.push_back(cvKp);
+
+        std::copy(kp.descriptor.begin(), kp.descriptor.end(), descriptors.ptr<uchar>(i));
+        i++;
+    }
+
     _descriptors.create(keypoints.size(), 32, CV_8U);
-    descriptors_cv.copyTo(_descriptors);
+    descriptors.copyTo(_descriptors);
     _keypoints.clear();
     _keypoints.reserve(keypoints.size());
     _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
