@@ -40,6 +40,12 @@ using namespace sensor_msgs;
 using namespace message_filters;
 
 ORB_SLAM2::System* mpSLAM;
+bool debug_view;
+
+ros::Subscriber frame_sub;
+message_filters::Subscriber<sensor_msgs::Image > * image_filter_sub;
+message_filters::Subscriber<orb_slam2::Frame >  * frame_filter_sub;
+message_filters::TimeSynchronizer<Image, orb_slam2::Frame > * msg_sync;
 
 void grabImageAndFeatures(const sensor_msgs::ImageConstPtr& image,
                           const orb_slam2::FrameConstPtr & frame)
@@ -59,6 +65,14 @@ void grabImageAndFeatures(const sensor_msgs::ImageConstPtr& image,
     mpSLAM->TrackMonocular(cv_ptr->image,cv_ptr->header.stamp.toSec(), *frame);
 }
 
+void grabFeatures(const orb_slam2::FrameConstPtr & frame)
+{
+    // If no features, just pass on a blank image. It has heigh rows and width columns
+    cv::Mat emptyMat = cv::Mat(frame->height,frame->width, CV_8U);
+    mpSLAM->TrackMonocular(emptyMat,frame->header.stamp.toSec(), *frame);
+//    ROS_INFO("Features processed");
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono");
@@ -69,17 +83,25 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;        
         ros::shutdown();
         return 1;
-    }    
+    }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     mpSLAM = new ORB_SLAM2::System(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("~");
 
-    message_filters::Subscriber<sensor_msgs::Image> image_sub(nh, "image", 1);
-    message_filters::Subscriber<orb_slam2::Frame> frame_sub(nh, "features", 1);
-    TimeSynchronizer<Image, orb_slam2::Frame> sync(image_sub, frame_sub, 10);
-    sync.registerCallback(boost::bind(&grabImageAndFeatures, _1, _2));
+    nh.param("debug_view", debug_view, false);
+
+    if (debug_view){
+        ROS_INFO("Subscribing to images and features");
+        image_filter_sub = new message_filters::Subscriber<sensor_msgs::Image>(nh, "image", 1);
+        frame_filter_sub = new message_filters::Subscriber<orb_slam2::Frame>(nh, "features", 1);
+        msg_sync = new message_filters::TimeSynchronizer<Image, orb_slam2::Frame>(*image_filter_sub, *frame_filter_sub, 10);
+        msg_sync->registerCallback(boost::bind(&grabImageAndFeatures, _1, _2));
+    } else {
+        ROS_INFO("Subscribing to features only");
+        frame_sub = nh.subscribe("features", 1, &grabFeatures);
+    }
 
     ros::spin();
 
