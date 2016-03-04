@@ -1,8 +1,0 @@
-prefix=/home/biorob/catkin_ws/src/orb_slam2/build/devel
-
-Name: orb_slam2
-Description: Description of orb_slam2
-Version: 0.0.1
-Cflags: 
-Libs: -L/home/biorob/catkin_ws/src/orb_slam2/build/devel/lib 
-Requires: 

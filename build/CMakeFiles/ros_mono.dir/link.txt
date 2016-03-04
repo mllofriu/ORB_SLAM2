@@ -1,1 +1,0 @@
-/usr/bin/c++    -Wall  -O3 -march=native -std=c++11 -O3 -DNDEBUG    CMakeFiles/ros_mono.dir/src/nodes/ros_mono.cc.o  -o devel/lib/orb_slam2/ros_mono -rdynamic 

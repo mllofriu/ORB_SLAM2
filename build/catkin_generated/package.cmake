@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "orb_slam2")
-set(orb_slam2_MAINTAINER "Raul Mur-Artal <raulmur@unizar.es>")
-set(orb_slam2_DEPRECATED "")
-set(orb_slam2_VERSION "0.0.1")
-set(orb_slam2_BUILD_DEPENDS "roscpp" "tf" "sensor_msgs" "image_transport" "message_filters" "cv_bridge" "cmake_modules" "opencv_apps")
-set(orb_slam2_RUN_DEPENDS "roscpp" "tf" "sensor_msgs" "image_transport" "message_filters" "cv_bridge" "opencv_apps")
-set(orb_slam2_BUILDTOOL_DEPENDS "catkin")
