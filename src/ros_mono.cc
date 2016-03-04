@@ -69,8 +69,11 @@ void grabFeatures(const orb_slam2::FrameConstPtr & frame)
 {
     // If no features, just pass on a blank image. It has heigh rows and width columns
     cv::Mat emptyMat = cv::Mat(frame->height,frame->width, CV_8U);
+    // Fill it with black
+    emptyMat = cv::Scalar(0,0,0);
+    // Send an empty image
+    // TODO: use different methods for gui or not
     mpSLAM->TrackMonocular(emptyMat,frame->header.stamp.toSec(), *frame);
-//    ROS_INFO("Features processed");
 }
 
 int main(int argc, char **argv)
