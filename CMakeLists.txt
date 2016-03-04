@@ -8,7 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   cv_bridge
   cmake_modules
-  opencv_apps
+  dynamic_reconfigure 
+  message_generation
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
@@ -31,50 +32,89 @@ else()
 endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+LIST(APPEND CMAKE_MODULE_PATH /home/biorob/Pangolin/build/src/CMakeFiles/)
 
 find_package(OpenCV 2.4.3 REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
-#find_package(Pangolin REQUIRED)
+find_package(Pangolin)
+find_package(Boost REQUIRED COMPONENTS signals thread)
+
+# generate the dynamic_reconfigure config file
+generate_dynamic_reconfigure_options(
+  cfg/FeatureDetector.cfg
+)
+
+## Generate messages in the 'msg' folder
+add_message_files(
+   FILES
+   KeyPoint.msg
+   Frame.msg
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+)
+
 
 catkin_package()
 
 include_directories(
-${EIGEN3_INCLUDE_DIR}
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include/
+  ${EIGEN3_INCLUDE_DIR}
+  ${Pangolin_INCLUDE_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include/
+  ${catkin_INCLUDE_DIRS} 
+  ${OpenCV_INCLUDE_DIRS}
 )
 
-add_library(${PROJECT_NAME} SHARED
-src/System.cc
-src/Tracking.cc
-src/LocalMapping.cc
-src/LoopClosing.cc
-src/Converter.cc
-src/MapPoint.cc
-src/KeyFrame.cc
-src/Map.cc
-src/Optimizer.cc
-src/PnPsolver.cc
-src/Frame.cc
-src/ORBmatcher.cc
-src/KeyFrameDatabase.cc
-src/Sim3Solver.cc
-src/Initializer.cc
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
-)
+# Only compile ros_mono slam if pangolin is available
+IF( $Pangolin_FOUND ) 
+	add_library(${PROJECT_NAME} SHARED
+		src/System.cc
+		src/Tracking.cc
+		src/LocalMapping.cc
+		src/LoopClosing.cc
+		src/ORBextractor.cc
+		src/ORBmatcher.cc
+		src/FrameDrawer.cc
+		src/Converter.cc
+		src/MapPoint.cc
+		src/KeyFrame.cc
+		src/Map.cc
+		src/MapDrawer.cc
+		src/Optimizer.cc
+		src/PnPsolver.cc
+		src/Frame.cc
+		src/KeyFrameDatabase.cc
+		src/Sim3Solver.cc
+		src/Initializer.cc
+		src/Viewer.cc
+	)
 
-target_link_libraries(${PROJECT_NAME}
-${catkin_LIBRARIES}
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-)
+	target_link_libraries(${PROJECT_NAME}
+		${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+		${Pangolin_LIBRARIES}
+		${EIGEN3_LIBS}
+		${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+		${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+	)
+	add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
+	#install(TARGETS ${PROJECT_NAME}
+	#        DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
 
-# Node for monocular camera
-add_executable(ros_mono
-src/nodes/ros_mono.cc
-)
 
-target_link_libraries(ros_mono ${PROJECT_NAME})
+	# Node for monocular camera
+	add_executable(ros_mono
+		src/ros_mono.cc
+	)
+	target_link_libraries(ros_mono ${PROJECT_NAME})
+ENDIF()
+
+add_executable(feature_detector src/feature_detector.cpp)
+target_link_libraries(feature_detector ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 

@@ -25,6 +25,9 @@
 #include <list>
 #include <opencv/cv.h>
 
+#include <orb_slam2/Frame.h>
+#include <orb_slam2/KeyPoint.h>
+
 
 namespace ORB_SLAM2
 {
@@ -56,7 +59,7 @@ public:
     // Compute the ORB features and descriptors on an image.
     // ORB are dispersed on the image using an octree.
     // Mask is ignored in the current implementation.
-    void operator()( cv::InputArray image, cv::InputArray mask,
+    void operator()( cv::InputArray image, const orb_slam2::Frame & frame, cv::InputArray mask,
       std::vector<cv::KeyPoint>& keypoints,
       cv::OutputArray descriptors);
 
@@ -64,7 +67,12 @@ public:
         return nlevels;}
 
     float inline GetScaleFactor(){
-        return scaleFactor;}
+        return scaleFactor;
+    }
+
+    float inline GetLogScaleFactor(){
+        return logScaleFactor;
+    }
 
     std::vector<float> inline GetScaleFactors(){
         return mvScaleFactor;
@@ -74,7 +82,7 @@ public:
         return mvInvScaleFactor;
     }
 
-    std::vector<float> inline GetScaleSigmaSquares(){
+    std::vector<float> const inline GetScaleSigmaSquares(){
         return mvLevelSigma2;
     }
 
@@ -82,32 +90,29 @@ public:
         return mvInvLevelSigma2;
     }
 
-    std::vector<cv::Mat> mvImagePyramid;
+//    std::vector<cv::Mat> mvImagePyramid;
 
 protected:
 
     void ComputePyramid(cv::Mat image);
-    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);    
+    void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                            const int &maxX, const int &minY, const int &maxY, const int &nFeatures, const int &level);
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
-    std::vector<cv::Point> pattern;
 
-    int nfeatures;
+
     double scaleFactor;
+    double logScaleFactor;
     int nlevels;
-    int iniThFAST;
-    int minThFAST;
-
-    std::vector<int> mnFeaturesPerLevel;
-
-    std::vector<int> umax;
 
     std::vector<float> mvScaleFactor;
-    std::vector<float> mvInvScaleFactor;    
+    std::vector<float> mvInvScaleFactor;
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
+
+    // Migration code
+    cv::ORB * ORB_detector_;
 };
 
 } //namespace ORB_SLAM
